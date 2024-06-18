@@ -1,5 +1,7 @@
 #if !defined NVML_H
 #define NVML_H
+// not avalailable on AMD
+#if !defined __HIP_PLATFORM_AMD__
 
 #include <nvml.h>
 
@@ -51,4 +53,5 @@ class Device {
 };
 }  // namespace nvml
 
-#endif
+#endif  //  __HIP_PLATFORM_AMD__
+#endif  // NVML_H

@@ -214,7 +214,7 @@ class Context : public Wrapper<hipCtx_t> {
   int occupancyMaxActiveBlocksPerMultiprocessor(int blockSize,
                                                 size_t dynamicSMemSize) {
     int numBlocks;
-    checkCudaCall(hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(
+    checkCudaCall(hipOccupancyMaxActiveBlocksPerMultiprocessor(
         &numBlocks, _obj, blockSize, dynamicSMemSize));
     return numBlocks;
   }
