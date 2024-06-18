@@ -1,5 +1,5 @@
 breathe
 exhale
-Sphinx
+sphinx==7.2.6
 sphinx-rtd-theme
 myst-parser

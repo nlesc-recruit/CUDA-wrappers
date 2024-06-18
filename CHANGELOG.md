@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Added `cu::Function::occupancyMaxActiveBlocksPerMultiprocessor()`
+- Added `cu::Device::getUUID()`
+- Added initial cudawrappers::nvml target
+- Added `nvrtc::findIncludePath()`
+
+### Changed
+
+- `target_embed_source` will now automatically inline local header files
+
+### Removed
+
+- Removed deprecated `cu::Context::setSharedMemConfig`
+
 ## \[0.7.0\] - 2024-03-08
 
 ### Added

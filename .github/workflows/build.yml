@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
         gcc-version: "12" 
-        cuda-version: "12.2.0"
+        rocm-version: "6.1.0"
     steps:
 
       - name: Check out a copy of the repository
@@ -27,7 +27,7 @@ jobs:
       - name: rocm-setup
         uses: neoblizz/rocm-setup@v0.1.0-beta
         with:
-          rocm: '6.1.0'
+          rocm: ${{ env.rocm-version }}
 
       - name: Show tool versions
         run: |
