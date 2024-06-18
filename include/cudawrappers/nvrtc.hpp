@@ -38,14 +38,17 @@ inline std::string findIncludePath() {
           [](struct dl_phdr_info *info, size_t, void *arg) -> int {
             std::string &path = *static_cast<std::string *>(arg);
             path = info->dlpi_name;
-            return path.find("libnvrtc.so") != std::string::npos;
+            // HIPRTC symbols are also in libamdhip64.so, although they will be removed from there
+            // see https://rocm.docs.amd.com/projects/HIP/en/docs-6.1.0/how-to/hip_rtc.html#deprecation-notice
+            // check both libraries for now, as linking with hiprtc is not yet required
+            return (path.find("libhiprtc.so") != std::string::npos) | (path.find("libamdhip64.so") != std::string::npos);
           },
           &path))
     for (size_t pos; (pos = path.find_last_of("/")) != std::string::npos;) {
       path.erase(pos);  // remove last part of path
 
       struct stat buffer;
-      const std::string filename = path + "/include/cuda.h";
+      const std::string filename = path + "/include/hip/hip_runtime.h";
       if (stat(filename.c_str(), &buffer) == 0) {
         return path + "/include";
       }
