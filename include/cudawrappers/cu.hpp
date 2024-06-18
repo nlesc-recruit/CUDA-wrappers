@@ -127,8 +127,8 @@ class Device : public Wrapper<hipDevice_t> {
   }
 
   std::string getUuid() const {
-    CUuuid uuid;
-    checkCudaCall(cuDeviceGetUuid(&uuid, _obj));
+    hipUUID uuid;
+    checkCudaCall(hipDeviceGetUuid(&uuid, _obj));
 
     // Convert a CUuuid to CUDA's string representation.
     // The CUuuid contains an array of 16 bytes, the UUID has
