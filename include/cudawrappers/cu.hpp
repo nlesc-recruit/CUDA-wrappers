@@ -14,6 +14,8 @@
 #include <utility>
 #include <vector>
 
+#include <cudawrappers/macros.h>
+
 #ifdef __HIP__
 typedef uint32_t cuuint32_t;
 #endif

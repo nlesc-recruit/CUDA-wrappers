@@ -42,7 +42,7 @@ TEST_CASE("Vector add") {
   const size_t bytesize = N * sizeof(float);
 
   cu::Device device(0);
-  cu::Context context(hipDeviceScheduleBlockingSync, device);
+  cu::Context context(CU_CTX_BLOCKING_SYNC, device);
 
   cu::Stream stream;
 
