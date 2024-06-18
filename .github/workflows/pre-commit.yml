@@ -16,7 +16,8 @@ jobs:
         # cuda version to install with separate action
         cuda-version: "12.2.0"
         # version for cmake-lint and cmake-format
-        cmakelang-version: "0.6.13"
+        clang-format-version: "v18.1.4"
+        cmake-format-version: "v0.6.13"
     steps:
 
       - name: Show git version
@@ -57,13 +58,15 @@ jobs:
         with:
           cuda: ${{ env.cuda-version }}
           method: "network"
-          sub-packages: '["nvcc", "nvrtc-dev", "nvtx"]'
+          sub-packages: '["nvcc", "nvml-dev", "nvrtc-dev", "nvtx"]'
           non-cuda-sub-packages: '["libcufft-dev"]'
           linux-local-args: '["--toolkit"]'
 
       - name: Install pre-commit and related tools
         run: |
-          pip install pre-commit cmakelang==${{ env.cmakelang-version}}
+          pip install pre-commit
+          pip install clang-format==${{env.clang-format-version}}
+          pip install cmake-format==${{env.cmake-format-version}}
           sudo apt install cppcheck -y
 
       - name: Show tool versions

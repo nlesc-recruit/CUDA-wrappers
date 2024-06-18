@@ -159,33 +159,35 @@ TEST_CASE("Test zeroing cu::DeviceMemory", "[zero]") {
     CHECK(data_in == data_out);
   }
 
-//  SECTION("Test cu::DeviceMemory with CU_MEMORYTYPE_DEVICE as host pointer") {
-//    cu::DeviceMemory mem(sizeof(float), CU_MEMORYTYPE_DEVICE, 0);
-//    float* ptr;
-//    CHECK_THROWS(ptr = mem);
-//  }
-//
-//  SECTION("Test cu::DeviceMemory with CU_MEMORYTYPE_UNIFIED as host pointer") {
-//    cu::DeviceMemory mem(sizeof(float), CU_MEMORYTYPE_UNIFIED,
-//                         CU_MEM_ATTACH_GLOBAL);
-//    float* ptr = mem;
-//    CHECK_NOTHROW(ptr[0] = 42.f);
-//  }
-//
-//  SECTION("Test cu::DeviceMemory with invalid CUmemorytype") {
-//    const size_t size = 1024;
-//    CHECK_THROWS(cu::DeviceMemory(size, CU_MEMORYTYPE_ARRAY));
-//    CHECK_THROWS(cu::DeviceMemory(size, CU_MEMORYTYPE_HOST));
-//  }
-//
-//  SECTION("Test cu::DeviceMemory with CU_MEMORYTYPE_DEVICE and flags") {
-//    const size_t size = 1024;
-//    CHECK_NOTHROW(cu::DeviceMemory(size, CU_MEMORYTYPE_DEVICE, 0));
-//    CHECK_THROWS(
-//        cu::DeviceMemory(size, CU_MEMORYTYPE_DEVICE, CU_MEM_ATTACH_GLOBAL));
-//    CHECK_THROWS(
-//        cu::DeviceMemory(size, CU_MEMORYTYPE_DEVICE, CU_MEM_ATTACH_HOST));
-//  }
+  //  SECTION("Test cu::DeviceMemory with CU_MEMORYTYPE_DEVICE as host pointer")
+  //  {
+  //    cu::DeviceMemory mem(sizeof(float), CU_MEMORYTYPE_DEVICE, 0);
+  //    float* ptr;
+  //    CHECK_THROWS(ptr = mem);
+  //  }
+  //
+  //  SECTION("Test cu::DeviceMemory with CU_MEMORYTYPE_UNIFIED as host
+  //  pointer") {
+  //    cu::DeviceMemory mem(sizeof(float), CU_MEMORYTYPE_UNIFIED,
+  //                         CU_MEM_ATTACH_GLOBAL);
+  //    float* ptr = mem;
+  //    CHECK_NOTHROW(ptr[0] = 42.f);
+  //  }
+  //
+  //  SECTION("Test cu::DeviceMemory with invalid CUmemorytype") {
+  //    const size_t size = 1024;
+  //    CHECK_THROWS(cu::DeviceMemory(size, CU_MEMORYTYPE_ARRAY));
+  //    CHECK_THROWS(cu::DeviceMemory(size, CU_MEMORYTYPE_HOST));
+  //  }
+  //
+  //  SECTION("Test cu::DeviceMemory with CU_MEMORYTYPE_DEVICE and flags") {
+  //    const size_t size = 1024;
+  //    CHECK_NOTHROW(cu::DeviceMemory(size, CU_MEMORYTYPE_DEVICE, 0));
+  //    CHECK_THROWS(
+  //        cu::DeviceMemory(size, CU_MEMORYTYPE_DEVICE, CU_MEM_ATTACH_GLOBAL));
+  //    CHECK_THROWS(
+  //        cu::DeviceMemory(size, CU_MEMORYTYPE_DEVICE, CU_MEM_ATTACH_HOST));
+  //  }
 }
 
 TEST_CASE("Test cu::Stream", "[stream]") {

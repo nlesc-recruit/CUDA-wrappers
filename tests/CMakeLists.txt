@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
 
-set(COMPONENTS cu nvrtc cufft vector_add)
+set(COMPONENTS cu nvml nvrtc cufft vector_add)
 
 foreach(component ${COMPONENTS})
   set_source_files_properties(test_${component}.cpp PROPERTIES LANGUAGE HIP)
@@ -26,6 +26,8 @@ endforeach()
 set(LINK_LIBRARIES Catch2::Catch2 cudawrappers::cu)
 
 target_link_libraries(test_cu PUBLIC ${LINK_LIBRARIES})
+
+target_link_libraries(test_nvml PUBLIC ${LINK_LIBRARIES} cudawrappers::nvml)
 
 target_link_libraries(test_nvrtc PUBLIC ${LINK_LIBRARIES} cudawrappers::nvrtc)
 
