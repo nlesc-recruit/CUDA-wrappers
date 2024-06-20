@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include <cudawrappers/macros.h>
+#include <cudawrappers/macros.hpp>
 
 #ifdef __HIP__
 typedef uint32_t cuuint32_t;
