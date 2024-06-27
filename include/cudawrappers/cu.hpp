@@ -292,7 +292,7 @@ class Context : public Wrapper<hipCtx_t> {
 class HostMemory : public Wrapper<void *> {
  public:
   explicit HostMemory(size_t size, unsigned int flags = 0) : _size(size) {
-    checkCudaCall(hipHostAlloc(&_obj, size, flags));
+    checkCudaCall(hipHostMalloc(&_obj, size, flags));
     manager = std::shared_ptr<void *>(new (void *)(_obj), [](void **ptr) {
       checkCudaCall(hipHostFree(*ptr));
       delete ptr;
