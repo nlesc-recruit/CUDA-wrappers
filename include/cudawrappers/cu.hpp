@@ -17,7 +17,7 @@
 
 #include <cudawrappers/macros.hpp>
 
-#ifdef __HIP__
+#if defined(__HIP__) || defined(__HIP_PLATFORM_AMD__)
 typedef uint32_t cuuint32_t;
 #endif
 
