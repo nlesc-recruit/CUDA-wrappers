@@ -186,7 +186,7 @@ class Device : public Wrapper<CUdevice> {
   }
 
   std::string getArch() const {
-#if defined(__HIP_PLATFORM_AMD__)
+#if defined(__HIP__)
     hipDeviceProp_t prop;
     checkCudaCall(hipGetDeviceProperties(&prop, _ordinal));
     return prop.gcnArchName;
@@ -686,20 +686,127 @@ class GraphKernelNodeParams : public Wrapper<CUDA_KERNEL_NODE_PARAMS> {
                         unsigned blockDimZ, unsigned sharedMemBytes,
                         const std::vector<const void *> &params) {
     _obj.func = function;
+#if defined(__HIP__)
+    _obj.blockDim = {blockDimX, blockDimY, blockDimZ};
+    _obj.gridDim = {gridDimX, gridDimY, gridDimZ};
+
+#else
     _obj.blockDimX = blockDimX;
     _obj.blockDimY = blockDimY;
     _obj.blockDimZ = blockDimZ;
     _obj.gridDimX = gridDimX;
     _obj.gridDimY = gridDimY;
     _obj.gridDimZ = gridDimZ;
+#endif
     _obj.sharedMemBytes = sharedMemBytes;
     _obj.kernelParams = const_cast<void **>(params.data());
     _obj.extra = nullptr;
   }
 };
 
+class GraphHostNodeParams : public Wrapper<CUDA_HOST_NODE_PARAMS> {
+ public:
+  GraphHostNodeParams(void (*fn)(void *), void *data) {
+    _obj.fn = fn;
+    _obj.userData = data;
+  }
+};
+
+class GraphDevMemAllocNodeParams : public Wrapper<CUDA_MEM_ALLOC_NODE_PARAMS> {
+ public:
+  GraphDevMemAllocNodeParams(const Device &dev, size_t size) {
+    _obj.bytesize = size;
+    _obj.poolProps.allocType = CU_MEM_ALLOCATION_TYPE_PINNED;
+    _obj.poolProps.location.id = dev.getOrdinal();
+    _obj.poolProps.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+  }
+
+  const CUdeviceptr &getDevPtr() { return _obj.dptr; }
+
+  const void *parameter() { return DeviceMemory(_obj.dptr).parameter(); }
+
+  const DeviceMemory getDeviceMemory() {
+    return DeviceMemory(_obj.dptr, _obj.bytesize);
+  }
+};
+
+class GraphMemCopyToDeviceNodeParams : public Wrapper<CUDA_MEMCPY3D> {
+ public:
+  GraphMemCopyToDeviceNodeParams(const CUdeviceptr &dst, const void *src,
+                                 size_t element_size, size_t size_x,
+                                 size_t size_y, size_t size_z,
+                                 size_t pitch = 0) {
+#if defined(__HIP__)
+    memset(&_obj, 0, sizeof(hipMemcpy3DParms));
+    if (pitch == 0) {
+      pitch = size_x * element_size;
+    }
+    _obj.srcPtr = make_hipPitchedPtr(const_cast<void *>(src),
+                                     element_size * size_x, size_x, size_y);
+    _obj.dstPtr =
+        make_hipPitchedPtr(const_cast<void *>(dst), pitch, size_x, size_y);
+
+    _obj.extent = make_hipExtent(size_x * element_size, size_y, size_z);
+    _obj.kind = hipMemcpyHostToDevice;
+#else
+    memset(&_obj, 0, sizeof(CUDA_MEMCPY3D));
+    _obj.srcMemoryType = CU_MEMORYTYPE_HOST;
+    _obj.dstMemoryType = CU_MEMORYTYPE_DEVICE;
+    _obj.srcHost = src;
+    _obj.dstDevice = dst;
+    _obj.srcXInBytes = 0;
+    _obj.srcY = 0;
+    _obj.srcZ = 0;
+    _obj.dstXInBytes = 0;
+    _obj.dstY = 0;
+    _obj.dstZ = 0;
+
+    _obj.WidthInBytes = size_x * element_size;
+    _obj.Height = size_y;
+    _obj.Depth = size_z;
+#endif
+  }
+};
+
+class GraphMemCopyToHostNodeParams : public Wrapper<CUDA_MEMCPY3D> {
+ public:
+  GraphMemCopyToHostNodeParams(void *dst, const CUdeviceptr &src,
+                               size_t element_size, size_t size_x,
+                               size_t size_y, size_t size_z, size_t pitch = 0) {
+#if defined(__HIP__)
+    memset(&_obj, 0, sizeof(hipMemcpy3DParms));
+    if (pitch == 0) {
+      pitch = size_x * element_size;
+    }
+    _obj.srcPtr =
+        make_hipPitchedPtr(const_cast<void *>(src), pitch, size_x, size_y);
+    _obj.dstPtr = make_hipPitchedPtr(const_cast<void *>(dst),
+                                     element_size * size_x, size_x, size_y);
+
+    _obj.extent = make_hipExtent(size_x * element_size, size_y, size_z);
+    _obj.kind = hipMemcpyDeviceToHost;
+#else
+    memset(&_obj, 0, sizeof(CUDA_MEMCPY3D));
+    _obj.srcMemoryType = CU_MEMORYTYPE_DEVICE;
+    _obj.dstMemoryType = CU_MEMORYTYPE_HOST;
+    _obj.srcDevice = src;
+    _obj.dstHost = dst;
+    _obj.srcXInBytes = 0;
+    _obj.srcY = 0;
+    _obj.srcZ = 0;
+    _obj.dstXInBytes = 0;
+    _obj.dstY = 0;
+    _obj.dstZ = 0;
+    _obj.WidthInBytes = size_x;
+    _obj.Height = size_y;
+    _obj.Depth = size_z;
+#endif
+  }
+};
+
 class Graph : public Wrapper<CUgraph> {
  public:
+  explicit Graph(CUgraph &graph) : Wrapper(graph) {};
   explicit Graph(unsigned int flags = CU_GRAPH_DEFAULT) {
     checkCudaCall(cuGraphCreate(&_obj, flags));
     manager = std::shared_ptr<CUgraph>(new CUgraph(_obj), [](CUgraph *ptr) {
@@ -710,10 +817,78 @@ class Graph : public Wrapper<CUgraph> {
 
   void addKernelNode(GraphNode &node,
                      const std::vector<CUgraphNode> &dependencies,
-                     const GraphKernelNodeParams &params) {
-    checkCudaCall(cuGraphAddKernelNode(node.getNode(), _obj,
-                                       dependencies.data(), dependencies.size(),
-                                       (CUDA_KERNEL_NODE_PARAMS *)(&params)));
+                     GraphKernelNodeParams &params) {
+    checkCudaCall(cuGraphAddKernelNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(),
+        reinterpret_cast<CUDA_KERNEL_NODE_PARAMS *>(&params)));
+  }
+
+  void addHostNode(GraphNode &node,
+                   const std::vector<CUgraphNode> &dependencies,
+                   GraphHostNodeParams &params) {
+    checkCudaCall(cuGraphAddHostNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(),
+        reinterpret_cast<CUDA_HOST_NODE_PARAMS *>(&params)));
+  }
+
+  void addDevMemFreeNode(GraphNode &node,
+                         const std::vector<CUgraphNode> &dependencies,
+                         const CUdeviceptr &devPtr) {
+    checkCudaCall(cuGraphAddMemFreeNode(node.getNode(), _obj,
+                                        dependencies.data(),
+                                        dependencies.size(), devPtr));
+  }
+
+  void addDevMemAllocNode(GraphNode &node,
+                          const std::vector<CUgraphNode> &dependencies,
+                          GraphDevMemAllocNodeParams &params) {
+    checkCudaCall(cuGraphAddMemAllocNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(),
+        reinterpret_cast<CUDA_MEM_ALLOC_NODE_PARAMS *>(&params)));
+  }
+
+  void addHostToDeviceMemCopyNode(GraphNode &node,
+                                  const std::vector<CUgraphNode> &dependencies,
+                                  GraphMemCopyToDeviceNodeParams &params,
+                                  Context &ctx) {
+#if defined(__HIP__)
+    /*checkCudaCall(hipGraphAddMemcpyNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(),
+        reinterpret_cast<hipMemcpy3DParms *>(&params)));*/
+    hipMemcpy3DParms par_ = params;
+
+    checkCudaCall(hipGraphAddMemcpyNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(), &par_));
+
+#else
+    checkCudaCall(cuGraphAddMemcpyNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(),
+        reinterpret_cast<CUDA_MEMCPY3D *>(&params), ctx));
+#endif
+  }
+
+  void addDeviceToHostMemCopyNode(GraphNode &node,
+                                  const std::vector<CUgraphNode> &dependencies,
+                                  GraphMemCopyToHostNodeParams &params,
+                                  const Context &ctx) {
+#if defined(__HIP__)
+    hipMemcpy3DParms par_ = params;
+
+    checkCudaCall(hipGraphAddMemcpyNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(), &par_));
+
+#else
+    checkCudaCall(cuGraphAddMemcpyNode(
+        node.getNode(), _obj, dependencies.data(), dependencies.size(),
+        reinterpret_cast<CUDA_MEMCPY3D *>(&params), ctx));
+#endif
+  }
+
+  void exportDotFile(
+      std::string path,
+      CUgraphDebugDot_flags flags =
+          CUgraphDebugDot_flags::CU_GRAPH_DEBUG_DOT_FLAGS_VERBOSE) {
+    checkCudaCall(cuGraphDebugDotPrint(_obj, path.c_str(), flags));
   }
 
   CUgraphExec Instantiate(unsigned int flags = CU_GRAPH_DEFAULT) {
@@ -724,14 +899,6 @@ class Graph : public Wrapper<CUgraph> {
   }
 };
 
-class WhileNode : public Wrapper<CUgraphNodeParams> {
- public:
-  WhileNode() {
-    _obj.conditional = _obj.type =
-        CUgraphNodeType::CU_GRAPH_NODE_TYPE_CONDITIONAL;
-  }
-};
-
 class GraphExec : public Wrapper<CUgraphExec> {
  public:
   explicit GraphExec(CUgraphExec &graph_exec) : Wrapper(graph_exec) {}
@@ -739,7 +906,7 @@ class GraphExec : public Wrapper<CUgraphExec> {
 
   explicit GraphExec(const Graph &graph,
                      unsigned int flags = CU_GRAPH_DEFAULT) {
-    checkCudaCall(cuGraphInstantiate(&_obj, graph, flags));
+    checkCudaCall(cuGraphInstantiateWithFlags(&_obj, graph, flags));
   }
 };
 
@@ -1003,7 +1170,6 @@ class Stream : public Wrapper<CUstream> {
 inline void Event::record(Stream &stream) {
   checkCudaCall(cuEventRecord(_obj, stream._obj));
 }
-
 }  // namespace cu
 
 #endif
