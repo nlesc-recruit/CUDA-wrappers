@@ -168,7 +168,7 @@ TEST_CASE("Test cu::Graph", "[graph]") {
         1,
         1};
 
-    size_t array_size = 3;
+    const size_t array_size = 3;
     cu::DeviceMemory mem(dev_alloc_params.getDeviceMemory());
 
     std::vector<const void*> params = {mem.parameter(), &array_size};
