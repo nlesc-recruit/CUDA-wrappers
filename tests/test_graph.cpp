@@ -10,8 +10,6 @@
 
 TEST_CASE("Test cu::Graph", "[graph]") {
   const std::string kernel = R"(
-    
-
     extern "C" __global__ void vector_print(float *a, size_t array_size) {
       int i = blockIdx.x * blockDim.x + threadIdx.x;
       if (i < array_size) {
