@@ -689,7 +689,6 @@ class GraphKernelNodeParams : public Wrapper<CUDA_KERNEL_NODE_PARAMS> {
 #if defined(__HIP__)
     _obj.blockDim = {blockDimX, blockDimY, blockDimZ};
     _obj.gridDim = {gridDimX, gridDimY, gridDimZ};
-
 #else
     _obj.blockDimX = blockDimX;
     _obj.blockDimY = blockDimY;
