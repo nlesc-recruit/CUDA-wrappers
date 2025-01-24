@@ -186,7 +186,7 @@ class Device : public Wrapper<CUdevice> {
   }
 
   std::string getArch() const {
-#if defined(__HIP__)
+#if defined(__HIP_PLATFORM_AMD__)
     hipDeviceProp_t prop;
     checkCudaCall(hipGetDeviceProperties(&prop, _ordinal));
     return prop.gcnArchName;
