@@ -851,9 +851,6 @@ class Graph : public Wrapper<CUgraph> {
                                   GraphMemCopyToDeviceNodeParams &params,
                                   Context &ctx) {
 #if defined(__HIP__)
-    /*checkCudaCall(hipGraphAddMemcpyNode(
-        node.getNode(), _obj, dependencies.data(), dependencies.size(),
-        reinterpret_cast<hipMemcpy3DParms *>(&params)));*/
     hipMemcpy3DParms par_ = params;
 
     checkCudaCall(hipGraphAddMemcpyNode(
