@@ -51,8 +51,8 @@ TEST_CASE("Test cu::Graph", "[graph]") {
     CHECK(data == 44);
   }
   SECTION("Test cu::Graph : memory management") {
-    std::vector<float> data_in(1000);   //{3, 3, 3};
-    std::vector<float> data_out(1000);  //{0, 0, 0};
+    std::vector<float> data_in(1000);
+    std::vector<float> data_out(1000);
 
     cu::HostMemory data_in_registered(data_in.data(), 1000 * sizeof(float));
     cu::HostMemory data_out_registered(data_out.data(), 1000 * sizeof(float));
