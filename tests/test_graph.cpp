@@ -28,7 +28,7 @@ TEST_CASE("Test cu::Graph", "[graph]") {
   cu::Module module(static_cast<const void*>(program.getPTX().data()));
 
   cu::Stream stream;
-
+  const size_t array_size = 1000;
   SECTION("Test cu::hostNode single value") {
     auto fn = [](void* data) {
       int* ptr = static_cast<int*>(data);
@@ -45,19 +45,21 @@ TEST_CASE("Test cu::Graph", "[graph]") {
 
     cu::GraphExec graph_exec(graph);
     cu::Stream stream;
-    stream.lunchGraph(graph_exec);
+    stream.launchGraph(graph_exec);
     stream.synchronize();
 
     CHECK(data == 44);
   }
   SECTION("Test cu::Graph : memory management") {
-    std::vector<float> data_in(1000);
-    std::vector<float> data_out(1000);
+    std::vector<float> data_in(array_size);
+    std::vector<float> data_out(array_size);
 
-    cu::HostMemory data_in_registered(data_in.data(), 1000 * sizeof(float));
-    cu::HostMemory data_out_registered(data_out.data(), 1000 * sizeof(float));
+    cu::HostMemory data_in_registered(data_in.data(),
+                                      array_size * sizeof(float));
+    cu::HostMemory data_out_registered(data_out.data(),
+                                       array_size * sizeof(float));
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < array_size; i++) {
       data_in[i] = 3;
     }
     std::cout << " Running on device : " << device.getOrdinal() << std::endl;
@@ -103,7 +105,6 @@ TEST_CASE("Test cu::Graph", "[graph]") {
         1,
         1};
 
-    size_t array_size = 3;
     cu::DeviceMemory mem(dev_alloc_params.getDeviceMemory());
     std::vector<const void*> params = {mem.parameter(), &array_size};
     cu::Function vector_print_fn(module, "vector_print");
@@ -119,7 +120,7 @@ TEST_CASE("Test cu::Graph", "[graph]") {
                             dev_alloc_params.getDevPtr());
 
     cu::GraphExec graph_exec(graph);
-    stream.lunchGraph(graph_exec);
+    stream.launchGraph(graph_exec);
     stream.synchronize();
     graph.exportDotFile("graph_out.dot");
 
@@ -131,8 +132,9 @@ TEST_CASE("Test cu::Graph", "[graph]") {
     CHECK(data_out[2] == 84.0f);
   }
   SECTION("Test cu:graph debug utilities") {
-    std::array<float, 3> data_in{3, 3, 3};
-    std::array<float, 3> data_out{0, 0, 0};
+    constexpr size_t array_size = 3;
+    std::array<float, array_size> data_in{3, 3, 3};
+    std::array<float, array_size> data_out{0, 0, 0};
     std::cout << " Running on device : " << device.getOrdinal() << std::endl;
     cu::Graph graph;
     cu::GraphNode dev_alloc, host_set, copy_to_dev, execute_kernel, device_free,
@@ -140,7 +142,7 @@ TEST_CASE("Test cu::Graph", "[graph]") {
 
     auto set_value = [](void* data) {
       float* ptr = static_cast<float*>(data);
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < array_size; i++) {
         ptr[i] = 42.0f;
       }
     };
@@ -168,7 +170,6 @@ TEST_CASE("Test cu::Graph", "[graph]") {
         1,
         1};
 
-    const size_t array_size = 3;
     cu::DeviceMemory mem(dev_alloc_params.getDeviceMemory());
 
     std::vector<const void*> params = {mem.parameter(), &array_size};
