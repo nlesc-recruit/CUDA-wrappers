@@ -10,7 +10,7 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
 
-set(COMPONENTS cu nvrtc cufft vector_add)
+set(COMPONENTS cu nvrtc cufft vector_add graph)
 if(${CUDAWRAPPERS_BACKEND_CUDA})
   list(APPEND COMPONENTS nvml)
 endif()
@@ -43,3 +43,5 @@ target_link_libraries(test_cufft PUBLIC ${LINK_LIBRARIES} cudawrappers::cufft)
 target_link_libraries(
   test_vector_add PUBLIC ${LINK_LIBRARIES} cudawrappers::nvrtc
 )
+
+target_link_libraries(test_graph PUBLIC ${LINK_LIBRARIES} cudawrappers::nvrtc)
