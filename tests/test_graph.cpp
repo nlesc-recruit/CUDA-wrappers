@@ -13,8 +13,9 @@ TEST_CASE("Test cu::Graph", "[graph]") {
     extern "C" __global__ void vector_print(float *a, size_t array_size) {
       int i = blockIdx.x * blockDim.x + threadIdx.x;
       if (i < array_size) {
-
+#ifdef DEBUG
         printf("a[%d] = %f\n", i, a[i]);
+#endif
         a[i] *= 2.0f;
       }
     }
@@ -62,7 +63,7 @@ TEST_CASE("Test cu::Graph", "[graph]") {
     for (int i = 0; i < array_size; i++) {
       data_in[i] = 3;
     }
-    std::cout << " Running on device : " << device.getOrdinal() << std::endl;
+
     cu::Graph graph;
     cu::GraphNode dev_alloc, host_set, copy_to_dev, execute_kernel, device_free,
         copy_to_host;
@@ -74,8 +75,9 @@ TEST_CASE("Test cu::Graph", "[graph]") {
       set_value_parameter* par = static_cast<set_value_parameter*>(data);
       for (int i = 0; i < par->size; i++) {
         par->ptr[i] = 42;
-
+#ifdef DEBUG
         std::cout << "Host node content: " << par->ptr[i] << std::endl;
+#endif
       }
     };
 
