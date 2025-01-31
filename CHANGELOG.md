@@ -20,6 +20,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 - Added `cufft::FFT1DR2C` and `cufft::FFT1DC2R`
 - Added `cu::Device::getOrdinal()`
 - Added deprecated warning to `cu::Context` constructor
+- Improved HIP documentation and building instructions
 
 ### Changed
 
